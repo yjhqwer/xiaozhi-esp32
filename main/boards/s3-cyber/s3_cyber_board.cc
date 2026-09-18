@@ -28,6 +28,7 @@ private:
     esp_lcd_panel_handle_t panel_ = nullptr;
     Display* display_ = nullptr;
     Button boot_button_;
+    Button ext_button_;
     Button touch_button_;
 
     void InitializeSpeakerSdPin() {
@@ -111,14 +112,18 @@ private:
     }
 
     void InitializeButtons() {
-        boot_button_.OnClick([this]() {
+        auto on_click = [this]() {
             auto& app = Application::GetInstance();
             if (app.GetDeviceState() == kDeviceStateStarting) {
                 EnterWifiConfigMode();
                 return;
             }
             app.ToggleChatState();
-        });
+        };
+
+        boot_button_.OnClick(on_click);
+        ext_button_.OnClick(on_click);
+
         touch_button_.OnPressDown([]() {
             Application::GetInstance().StartListening();
         });
@@ -155,6 +160,7 @@ private:
 public:
     S3CyberBoard() :
         boot_button_(BOOT_BUTTON_GPIO),
+        ext_button_(EXT_BUTTON_GPIO),
         touch_button_(TOUCH_BUTTON_GPIO) {
         InitializeSpeakerSdPin();
         InitializeDisplayI2c();
