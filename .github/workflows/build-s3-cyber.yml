@@ -3,9 +3,6 @@ name: Build S3-Cyber Board
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'main/boards/s3-cyber/**'
-      - '.github/workflows/build-s3-cyber.yml'
 
 permissions:
   contents: read
