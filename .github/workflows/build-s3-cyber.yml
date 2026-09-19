@@ -23,9 +23,46 @@ jobs:
           source $IDF_PATH/export.sh
           python scripts/build.py s3-cyber --name s3-cyber
 
-      - name: Upload merged binary
+      - name: Upload firmware binaries
         uses: actions/upload-artifact@v7
         with:
           name: s3-cyber-firmware
-          path: build/merged-binary.bin
+          path: |
+            build/merged-binary.bin
+            build/xiaozhi.bin
           if-no-files-found: error
+
+  deploy:
+    name: Deploy to OTA VPS
+    needs: build
+    if: github.ref == 'refs/heads/custom-s3-cyber'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: s3-cyber-firmware
+          path: firmware
+
+      - name: Install SSH key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.OTA_DEPLOY_KEY }}" > ~/.ssh/ota_deploy_key
+          chmod 600 ~/.ssh/ota_deploy_key
+
+      - name: Upload app binary to OTA server
+        shell: bash
+        run: |
+          VER=$(grep 'set(PROJECT_VER' CMakeLists.txt | sed 's/.*"\(.*\)".*/\1/')
+          echo "Deploying xiaozhi-${VER}.bin (app bin only, not merged-binary)"
+          scp -O -i ~/.ssh/ota_deploy_key -o StrictHostKeyChecking=accept-new \
+            firmware/xiaozhi.bin \
+            "otadeploy@${{ secrets.OTA_DEPLOY_HOST }}:/opt/ota/firmware/xiaozhi-${VER}.bin"
+          printf '%s\n%s\n' "$VER" "xiaozhi-${VER}.bin" > version.txt
+          scp -O -i ~/.ssh/ota_deploy_key -o StrictHostKeyChecking=accept-new \
+            version.txt \
+            "otadeploy@${{ secrets.OTA_DEPLOY_HOST }}:/opt/ota/firmware/version.txt"

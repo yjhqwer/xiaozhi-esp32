@@ -6,7 +6,8 @@
             "name": "s3-cyber",
             "sdkconfig_append": [
                 "CONFIG_BOARD_TYPE_S3_CYBER=y",
-                "CONFIG_OLED_SH1106_128X64=y"
+                "CONFIG_OLED_SH1106_128X64=y",
+                "CONFIG_OTA_URL=\"https://ota.yjhapp.top:8443/xiaozhi/ota/\""
             ]
         }
     ]
